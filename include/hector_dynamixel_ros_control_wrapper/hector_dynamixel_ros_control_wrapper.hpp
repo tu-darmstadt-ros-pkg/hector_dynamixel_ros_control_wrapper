@@ -56,7 +56,7 @@ namespace hector_dynamixel_ros_control_wrapper
 class HectorDynamixelRosControlWrapper : public hardware_interface::RobotHW
 {
 public:
-    HectorDynamixelRosControlWrapper();
+    HectorDynamixelRosControlWrapper(ros::NodeHandle &nh);
 
     void cleanup();
 
@@ -65,11 +65,13 @@ public:
 
 
 private:
+    void setupJoint(std::string joint_name, bool withTopics);
     void jointStateCallback(const dynamixel_msgs::JointStateConstPtr& dyn_joint_state);
 
     ros::NodeHandle nh_;
 
     std::vector<std::string> joint_name_vector_;
+    std::vector<std::string> fake_joint_name_vector_;
 
     std::map<std::string, double> joint_positions_;
     std::map<std::string, double> joint_pos_cmds_;
@@ -88,7 +90,7 @@ private:
     hardware_interface::PositionJointInterface position_joint_interface_;
 
 
-    double _fake_dof_value;
+    std::map<std::string, double> _fake_joint_values;
     std::map<std::string, double> joint_offset;
 };
 

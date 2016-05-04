@@ -43,40 +43,65 @@
 namespace hector_dynamixel_ros_control_wrapper
 {
 
-HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper()
+HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHandle &nh)
 {
-    joint_name_vector_.push_back("joint_0");
-    joint_name_vector_.push_back("joint_1");
-    joint_name_vector_.push_back("joint_2");
-    joint_name_vector_.push_back("joint_3");
-    joint_name_vector_.push_back("joint_4");
-    joint_name_vector_.push_back("joint_5");
+    ROS_DEBUG("HectorDynamixelRosControlWrapper()");
+    ros::NodeHandle joints_nh = ros::NodeHandle(nh, "joints");
+    XmlRpc::XmlRpcValue joints_params;
+    joints_nh.getParam("", joints_params);
+    ROS_DEBUG("Joints params: %s.", joints_params.toXml().c_str());
 
-    joint_offset["joint_0"] = 0.1380582709097077;
-    joint_offset["joint_1"] = -1.1249192444494702;
-    joint_offset["joint_2"] = 1.4828480949561198;
-    joint_offset["joint_3"] = 0.5011003907093095;
-    joint_offset["joint_4"] = 0.4346278899009317;
-    joint_offset["joint_5"] = 0;
-
-  for(unsigned int i=0; i<joint_name_vector_.size(); i++)
+    XmlRpc::XmlRpcValue::iterator xml_it;
+    for (xml_it = joints_params.begin(); xml_it != joints_params.end(); ++xml_it)
     {
-        joint_positions_[joint_name_vector_[i]] = 0.0;
-        joint_velocitys_[joint_name_vector_[i]] = 0.0;
-        joint_efforts_[joint_name_vector_[i]] = 0.0;
+        XmlRpc::XmlRpcValue joint_id = xml_it->first;
+        ROS_DEBUG("Found joint: %s", joint_id.toXml().c_str());
+        XmlRpc::XmlRpcValue joint_values = xml_it->second;
 
-        joint_cmd_pubs_[joint_name_vector_[i]] = nh_.advertise<std_msgs::Float64>("/" + joint_name_vector_[i] + "/command", 5);
+        std::string joint_name = joint_id;
+        double offset = 0;
+        std::string joint_type = "normal";
 
-        ros::Subscriber sub = nh_.subscribe("/" + joint_name_vector_[i] + "/state", 1, &HectorDynamixelRosControlWrapper::jointStateCallback, this);
-        joint_state_subs_[joint_name_vector_[i]] = sub;
+        if (joint_values.hasMember("name"))
+        {
+            joint_name = static_cast<std::string>(joint_values["name"]);
+            ROS_DEBUG("Got joint name: %s", joint_name.c_str());
+        }
 
-        nh_.setCallbackQueue(&subscriber_queue_);
 
-        hardware_interface::JointStateHandle state_handle(joint_name_vector_[i], &joint_positions_[joint_name_vector_[i]], &joint_velocitys_[joint_name_vector_[i]], &joint_efforts_[joint_name_vector_[i]]);
-        joint_state_interface_.registerHandle(state_handle);
+        if (joint_values.hasMember("offset"))
+        {
+            offset = joint_values["offset"];
+            ROS_DEBUG("Got joint offset: %f", offset);
+        }
 
-        hardware_interface::JointHandle pos_handle(joint_state_interface_.getHandle(joint_name_vector_[i]), &joint_pos_cmds_[joint_name_vector_[i]]);
-        position_joint_interface_.registerHandle(pos_handle);
+        if (joint_values.hasMember("type"))
+        {
+            joint_type = static_cast<std::string>(joint_values["type"]);
+            ROS_DEBUG("Got joint type: %s", joint_type.c_str());
+        }
+
+        if(joint_type == "normal"){
+            joint_name_vector_.push_back(joint_name);
+        }else if(joint_type == "fake"){
+            fake_joint_name_vector_.push_back(joint_name);
+        }else{
+            ROS_ERROR("invalid joint type %s for joint %s", joint_type.c_str(), joint_id.toXml().c_str());
+            continue;
+        }
+
+        joint_offset[joint_name] = offset;
+
+    }
+
+    for(unsigned int i=0; i<joint_name_vector_.size(); i++)
+    {
+        setupJoint(joint_name_vector_[i], true);
+    }
+
+    for(unsigned int i=0; i<fake_joint_name_vector_.size(); i++)
+    {
+        setupJoint(fake_joint_name_vector_[i], false);
     }
 
     registerInterface(&joint_state_interface_);
@@ -85,7 +110,27 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper()
     subscriber_spinner_.reset(new ros::AsyncSpinner(1, &subscriber_queue_));
     subscriber_spinner_->start();
 
-    _fake_dof_value = 0.0;
+}
+
+void HectorDynamixelRosControlWrapper::setupJoint(std::string joint_name, bool withTopics){
+    joint_positions_[joint_name] = 0.0;
+    joint_velocitys_[joint_name] = 0.0;
+    joint_efforts_[joint_name] = 0.0;
+
+    if(withTopics){
+        joint_cmd_pubs_[joint_name] = nh_.advertise<std_msgs::Float64>("/" + joint_name + "/command", 5);
+
+        ros::Subscriber sub = nh_.subscribe("/" + joint_name + "/state", 1, &HectorDynamixelRosControlWrapper::jointStateCallback, this);
+        joint_state_subs_[joint_name] = sub;
+
+        nh_.setCallbackQueue(&subscriber_queue_);
+    }
+
+    hardware_interface::JointStateHandle state_handle(joint_name, &joint_positions_[joint_name], &joint_velocitys_[joint_name], &joint_efforts_[joint_name]);
+    joint_state_interface_.registerHandle(state_handle);
+
+    hardware_interface::JointHandle pos_handle(joint_state_interface_.getHandle(joint_name), &joint_pos_cmds_[joint_name]);
+    position_joint_interface_.registerHandle(pos_handle);
 }
 
 void HectorDynamixelRosControlWrapper::cleanup()
@@ -103,38 +148,45 @@ void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period
         joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
     }
 
-    //take last dof as fake
-    joint_positions_[joint_name_vector_[joint_name_vector_.size()-1]] = _fake_dof_value;
+    for(unsigned int i=0; i<fake_joint_name_vector_.size()-1; i++)
+    {
+        //take last value
+        joint_positions_[fake_joint_name_vector_[i]] = _fake_joint_values[fake_joint_name_vector_[i]];
+    }
 }
 
 void HectorDynamixelRosControlWrapper::write(ros::Time time, ros::Duration period)
 {
     for(unsigned int i=0; i<joint_name_vector_.size(); i++)
-      {
+    {
         std_msgs::Float64 msg;
         msg.data = joint_pos_cmds_[joint_name_vector_[i]] + joint_offset[joint_name_vector_[i]];
         joint_cmd_pubs_[joint_name_vector_[i]].publish(msg);
     }
-
-   //remember last joint value for fake 6. dof
-   _fake_dof_value = joint_pos_cmds_[joint_name_vector_[joint_name_vector_.size()-1]];
+    for(unsigned int i=0; i<fake_joint_name_vector_.size()-1; i++)
+    {
+        //remember last joint value for fake 6. dof
+        _fake_joint_values[fake_joint_name_vector_[i]] = joint_pos_cmds_[joint_name_vector_[i]] + joint_offset[joint_name_vector_[i]];
+    }
 }
 
 void HectorDynamixelRosControlWrapper::jointStateCallback(const dynamixel_msgs::JointStateConstPtr& dyn_joint_state)
 {
 
-   received_joint_states_[dyn_joint_state->name] = dyn_joint_state;
+    received_joint_states_[dyn_joint_state->name] = dyn_joint_state;
 }
 
 }
 
 int main(int argc, char** argv){
 
-try{
+    try{
         ROS_INFO("starting");
         ros::init(argc, argv, "hector_dynamixel_ros_control_wrapper");
 
-        hector_dynamixel_ros_control_wrapper::HectorDynamixelRosControlWrapper hector_dynamixel_ros_control_wrapper;
+        ros::NodeHandle pnh("~");
+
+        hector_dynamixel_ros_control_wrapper::HectorDynamixelRosControlWrapper hector_dynamixel_ros_control_wrapper(pnh);
 
         controller_manager::ControllerManager cm(&hector_dynamixel_ros_control_wrapper);
 
@@ -146,26 +198,26 @@ try{
         ros::Time last_time = ros::Time::now();
 
         while (ros::ok())
-                {
-                    //ROS_INFO("in main loop");
-                    loop_rate.sleep();
+        {
+            //ROS_INFO("in main loop");
+            loop_rate.sleep();
 
-                    ros::Time current_time = ros::Time::now();
-                    ros::Duration elapsed_time = current_time - last_time;
-                    last_time = current_time;
+            ros::Time current_time = ros::Time::now();
+            ros::Duration elapsed_time = current_time - last_time;
+            last_time = current_time;
 
-                    //ROS_INFO("before read");
-                    hector_dynamixel_ros_control_wrapper.read(current_time, elapsed_time);
-                    //ROS_INFO("after read");
+            //ROS_INFO("before read");
+            hector_dynamixel_ros_control_wrapper.read(current_time, elapsed_time);
+            //ROS_INFO("after read");
 
-                    //ROS_INFO("before cm.update");
-                    cm.update(current_time, elapsed_time);
-                    //ROS_INFO("after cm.update");
+            //ROS_INFO("before cm.update");
+            cm.update(current_time, elapsed_time);
+            //ROS_INFO("after cm.update");
 
-                    //ROS_INFO("before write");
-                    hector_dynamixel_ros_control_wrapper.write(current_time, elapsed_time);
-                    //ROS_INFO("after write");
-                }
+            //ROS_INFO("before write");
+            hector_dynamixel_ros_control_wrapper.write(current_time, elapsed_time);
+            //ROS_INFO("after write");
+        }
 
         hector_dynamixel_ros_control_wrapper.cleanup();
     }
