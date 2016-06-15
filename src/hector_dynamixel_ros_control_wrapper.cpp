@@ -45,7 +45,7 @@ namespace hector_dynamixel_ros_control_wrapper
 
 HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHandle &nh)
 {
-    ROS_DEBUG("HectorDynamixelRosControlWrapper()");
+    ROS_INFO("HectorDynamixelRosControlWrapper()");
     ros::NodeHandle joints_nh = ros::NodeHandle(nh, "joints");
     XmlRpc::XmlRpcValue joints_params;
     joints_nh.getParam("", joints_params);
@@ -110,6 +110,8 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHand
     subscriber_spinner_.reset(new ros::AsyncSpinner(1, &subscriber_queue_));
     subscriber_spinner_->start();
 
+    ROS_INFO("HectorDynamixelRosControlWrapper() --done");
+
 }
 
 void HectorDynamixelRosControlWrapper::setupJoint(std::string joint_name, bool withTopics){
@@ -157,17 +159,22 @@ void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period
 
 void HectorDynamixelRosControlWrapper::write(ros::Time time, ros::Duration period)
 {
+
+    ROS_DEBUG("write()");
     for(unsigned int i=0; i<joint_name_vector_.size(); i++)
     {
         std_msgs::Float64 msg;
         msg.data = joint_pos_cmds_[joint_name_vector_[i]] + joint_offset[joint_name_vector_[i]];
         joint_cmd_pubs_[joint_name_vector_[i]].publish(msg);
     }
-    for(unsigned int i=0; i<fake_joint_name_vector_.size()-1; i++)
+    
+    ROS_DEBUG("write() -- fake_joints");
+    for(unsigned int i=0; i<fake_joint_name_vector_.size(); i++)
     {
         //remember last joint value for fake 6. dof
         _fake_joint_values[fake_joint_name_vector_[i]] = joint_pos_cmds_[joint_name_vector_[i]] + joint_offset[joint_name_vector_[i]];
     }
+    ROS_DEBUG("write() --done");
 }
 
 void HectorDynamixelRosControlWrapper::jointStateCallback(const dynamixel_msgs::JointStateConstPtr& dyn_joint_state)
@@ -188,7 +195,9 @@ int main(int argc, char** argv){
 
         hector_dynamixel_ros_control_wrapper::HectorDynamixelRosControlWrapper hector_dynamixel_ros_control_wrapper(pnh);
 
+        ROS_DEBUG("ControllerManager - setup");
         controller_manager::ControllerManager cm(&hector_dynamixel_ros_control_wrapper);
+        ROS_DEBUG("ControllerManager - done");
 
         ros::AsyncSpinner spinner(4);
         spinner.start();
@@ -197,6 +206,7 @@ int main(int argc, char** argv){
 
         ros::Time last_time = ros::Time::now();
 
+        ROS_DEBUG("pre loop");
         while (ros::ok())
         {
             //ROS_INFO("in main loop");
