@@ -71,6 +71,7 @@ private:
     ros::NodeHandle nh_;
 
     std::vector<std::string> joint_name_vector_;
+    std::map<std::string, std::string> topic_name_map_;
     std::vector<std::string> fake_joint_name_vector_;
 
     std::map<std::string, double> joint_positions_;

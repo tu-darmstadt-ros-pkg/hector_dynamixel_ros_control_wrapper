@@ -59,12 +59,19 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHand
         XmlRpc::XmlRpcValue joint_values = xml_it->second;
 
         std::string joint_name = joint_id;
+        std::string topic_name = joint_id;
         double offset = 0;
         std::string joint_type = "normal";
 
-        if (joint_values.hasMember("name"))
+        if (joint_values.hasMember("topic_name"))
         {
-            joint_name = static_cast<std::string>(joint_values["name"]);
+            topic_name = static_cast<std::string>(joint_values["topic_name"]);
+            ROS_DEBUG("Got joint name: %s", joint_name.c_str());
+        }
+        
+        if (joint_values.hasMember("joint_name"))
+        {
+            joint_name = static_cast<std::string>(joint_values["joint_name"]);
             ROS_DEBUG("Got joint name: %s", joint_name.c_str());
         }
 
@@ -91,6 +98,7 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHand
         }
 
         joint_offset[joint_name] = offset;
+        topic_name_map_[joint_name] = topic_name;
 
     }
 
@@ -120,9 +128,10 @@ void HectorDynamixelRosControlWrapper::setupJoint(std::string joint_name, bool w
     joint_efforts_[joint_name] = 0.0;
 
     if(withTopics){
-        joint_cmd_pubs_[joint_name] = nh_.advertise<std_msgs::Float64>("/" + joint_name + "/command", 5);
+        std::string topic_name = topic_name_map_[joint_name];
+        joint_cmd_pubs_[joint_name] = nh_.advertise<std_msgs::Float64>("/" + topic_name + "/command", 5);
 
-        ros::Subscriber sub = nh_.subscribe("/" + joint_name + "/state", 1, &HectorDynamixelRosControlWrapper::jointStateCallback, this);
+        ros::Subscriber sub = nh_.subscribe("/" + topic_name + "/state", 1, &HectorDynamixelRosControlWrapper::jointStateCallback, this);
         joint_state_subs_[joint_name] = sub;
 
         nh_.setCallbackQueue(&subscriber_queue_);

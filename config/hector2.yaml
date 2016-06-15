@@ -1,0 +1,9 @@
+joints:
+    camera_y:
+        offset: 0.0
+        topic_name: "joint_0"
+        joint_name: "camera/y"
+    camera_z:
+        offset: 0.0
+        topic_name: "joint_1"
+        joint_name: "camera/z"

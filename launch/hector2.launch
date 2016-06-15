@@ -1,0 +1,28 @@
+<launch>
+
+<include file="$(find hector_dynamixel_ros_control_wrapper)/launch/hector2_dynamixel_bringup.launch"/>
+
+<arg name="robot_description" default="$(find xacro)/xacro.py '$(find hector_tracked_vehicles_description)/urdf/obelix_ugv_vision_box.urdf.xacro'" />
+
+<param name="robot_description" command="$(arg robot_description)" />
+
+<!-- robot state publisher -->
+<node pkg="robot_state_publisher" type="state_publisher" name="robot_state_publisher"/>
+
+
+    <node name="ros_control_test_wrapper" pkg="hector_dynamixel_ros_control_wrapper" type="hector_dynamixel_ros_control_wrapper_node" output="screen">
+
+      <rosparam command="load" file="$(find hector_dynamixel_ros_control_wrapper)/config/hector2.yaml" />
+
+    </node>
+
+
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/joint_state_controller.yaml" command="load"/>
+    <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller" />
+
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/joint_trajectory_controller.yaml" command="load"/>
+    <node name="joint_trajectory_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="head_controller" />
+
+ </launch>
+
+
