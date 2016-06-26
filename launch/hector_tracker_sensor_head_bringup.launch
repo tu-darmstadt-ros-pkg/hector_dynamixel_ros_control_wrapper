@@ -7,7 +7,7 @@
     <!-- Start the Dynamixel servo manager to control hector_arm -->
     <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
         <rosparam subst_value="true">
-            namespace: hector_head_controller_manager
+            namespace: sensor_head_dynamixel_controller_manager
             serial_ports:
                 sensor_head_port:
                     port_name: $(arg port_name)
