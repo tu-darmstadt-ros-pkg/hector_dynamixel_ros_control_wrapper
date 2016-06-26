@@ -43,6 +43,6 @@
     <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller" ns="sensor_head_control"/>
 
     <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_tracker_sensor_head_joint_trajectory_controller.yaml" command="load" ns="sensor_head_control"/>
-    <node name="joint_trajectory_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="head_controller" ns="sensor_head_control"/>                
+    <node name="joint_trajectory_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="sensor_head_traj_controller" ns="sensor_head_control"/>                
 
  </launch>
