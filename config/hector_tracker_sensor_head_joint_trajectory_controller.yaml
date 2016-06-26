@@ -1,6 +1,6 @@
 sensor_head_traj_controller:
   type: "position_controllers/JointTrajectoryController"
   joints:
-      - camera/z
-      - camera/y
+      - sensor_head_yaw_joint
+      - sensor_head_pitch_joint
 
