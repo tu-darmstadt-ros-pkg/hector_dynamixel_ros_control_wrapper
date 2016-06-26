@@ -151,15 +151,18 @@ void HectorDynamixelRosControlWrapper::cleanup()
 
 void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period)
 {
-    if(received_joint_states_.size()<5){
+    if(received_joint_states_.size()<joint_name_vector_.size()){
+	ROS_ERROR_THROTTLE(1,"Trying to read joints but received joint states number is too less");
+	ROS_ERROR_THROTTLE(1, "Expected size %d but was %d", joint_name_vector_.size(), received_joint_states_.size());
         return;
     }
-    for(unsigned int i=0; i<joint_name_vector_.size()-1; i++)
+    for(unsigned int i=0; i<joint_name_vector_.size(); i++)
     {
+	//ROS_INFO_THROTTLE(1,"processing %s", joint_name_vector_[i].c_str());
         joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
     }
 
-    for(unsigned int i=0; i<fake_joint_name_vector_.size()-1; i++)
+    for(unsigned int i=0; i<fake_joint_name_vector_.size(); i++)
     {
         //take last value
         joint_positions_[fake_joint_name_vector_[i]] = _fake_joint_values[fake_joint_name_vector_[i]];
