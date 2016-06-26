@@ -205,7 +205,7 @@ int main(int argc, char** argv){
         hector_dynamixel_ros_control_wrapper::HectorDynamixelRosControlWrapper hector_dynamixel_ros_control_wrapper(pnh);
 
         ROS_DEBUG("ControllerManager - setup");
-        controller_manager::ControllerManager cm(&hector_dynamixel_ros_control_wrapper);
+        controller_manager::ControllerManager cm(&hector_dynamixel_ros_control_wrapper, pnh);
         ROS_DEBUG("ControllerManager - done");
 
         ros::AsyncSpinner spinner(4);
