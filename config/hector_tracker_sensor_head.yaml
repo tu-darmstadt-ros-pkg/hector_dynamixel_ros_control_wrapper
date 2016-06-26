@@ -1,0 +1,9 @@
+joints:
+    camera_y:
+        offset: 0.0
+        topic_name: "sensor_head_yaw_joint"
+        joint_name: "sensor_head_yaw_joint"
+    camera_z:
+        offset: 0.0
+        topic_name: "sensor_head_pitch_joint"
+        joint_name: "sensor_head_pitch_joint"

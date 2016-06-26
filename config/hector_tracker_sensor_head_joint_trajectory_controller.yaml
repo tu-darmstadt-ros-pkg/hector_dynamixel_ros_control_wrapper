@@ -1,0 +1,6 @@
+sensor_head_traj_controller:
+  type: "position_controllers/JointTrajectoryController"
+  joints:
+      - camera/z
+      - camera/y
+

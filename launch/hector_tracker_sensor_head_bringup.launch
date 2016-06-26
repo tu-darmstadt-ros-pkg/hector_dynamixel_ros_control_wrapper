@@ -1,0 +1,34 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+
+    <arg name="port_name" default="/dev/rs485_extern"/>
+    
+    <!-- Start the Dynamixel servo manager to control hector_arm -->
+    <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam subst_value="true">
+            namespace: hector_head_controller_manager
+            serial_ports:
+                sensor_head_port:
+                    port_name: $(arg port_name)
+                    baud_rate: 1000000
+                    min_motor_id: 9
+                    max_motor_id: 13
+                    update_rate: 25
+
+        </rosparam>
+    </node>
+
+    <!-- Start upper and lower arm joint controllers -->
+    
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_sensor_head_dynamixel_controller.yaml" command="load"/>
+
+    <node name="hector_arm_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=sensor_head_dynamixel_controller_manager
+                --port=sensor_head_port
+                --type=simple
+                sensor_head_yaw_joint
+                sensor_head_pitch_joint"
+                output="screen"/>
+
+ </launch>
