@@ -21,7 +21,7 @@
 
     <!-- Start upper and lower arm joint controllers -->
     
-    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_sensor_head_dynamixel_controller.yaml" command="load"/>
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_tracker_sensor_head_dynamixel_controller.yaml" command="load"/>
 
     <node name="hector_arm_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
           args="--manager=sensor_head_dynamixel_controller_manager
