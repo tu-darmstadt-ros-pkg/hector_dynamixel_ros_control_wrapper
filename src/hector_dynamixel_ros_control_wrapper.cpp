@@ -68,7 +68,7 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHand
             topic_name = static_cast<std::string>(joint_values["topic_name"]);
             ROS_DEBUG("Got joint name: %s", joint_name.c_str());
         }
-        
+
         if (joint_values.hasMember("joint_name"))
         {
             joint_name = static_cast<std::string>(joint_values["joint_name"]);
@@ -152,14 +152,17 @@ void HectorDynamixelRosControlWrapper::cleanup()
 void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period)
 {
     if(received_joint_states_.size()<joint_name_vector_.size()){
-	ROS_ERROR_THROTTLE(1,"Trying to read joints but received joint states number is too less");
-	ROS_ERROR_THROTTLE(1, "Expected size %d but was %d", joint_name_vector_.size(), received_joint_states_.size());
+      	ROS_ERROR_THROTTLE(1,"Trying to read joints but received joint states number is too less");
+      	ROS_ERROR_THROTTLE(1, "Expected size %d but was %d", joint_name_vector_.size(), received_joint_states_.size());
         return;
     }
     for(unsigned int i=0; i<joint_name_vector_.size(); i++)
     {
-	//ROS_INFO_THROTTLE(1,"processing %s", joint_name_vector_[i].c_str());
+
+	     //ROS_INFO_THROTTLE(1,"processing %s", joint_name_vector_[i].c_str());
         joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
+        joint_velocitys_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->velocity;
+        joint_efforts_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->load;
     }
 
     for(unsigned int i=0; i<fake_joint_name_vector_.size(); i++)
@@ -179,7 +182,7 @@ void HectorDynamixelRosControlWrapper::write(ros::Time time, ros::Duration perio
         msg.data = joint_pos_cmds_[joint_name_vector_[i]] + joint_offset[joint_name_vector_[i]];
         joint_cmd_pubs_[joint_name_vector_[i]].publish(msg);
     }
-    
+
     ROS_DEBUG("write() -- fake_joints");
     for(unsigned int i=0; i<fake_joint_name_vector_.size(); i++)
     {
