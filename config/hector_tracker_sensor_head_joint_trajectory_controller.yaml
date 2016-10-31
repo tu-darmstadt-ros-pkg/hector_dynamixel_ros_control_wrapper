@@ -4,3 +4,18 @@ sensor_head_traj_controller:
       - sensor_head_yaw_joint
       - sensor_head_pitch_joint
 
+#  gains: # Required because we're controlling an effort interface
+#      sensor_head_yaw_joint: {p: &kp_sensor_head 40,  d: &kd_sensor_head 0, i: *ki_default, i_clamp: *ki__clamp_default}
+#      sensor_head_pitch_joint: {p: *kp_sensor_head,  d: *kd_sensor_head, i: *ki_default, i_clamp: *ki__clamp_default}
+
+  constraints:
+    goal_time: &goal_time_constraint 4.0
+    stopped_velocity_tolerance: 1.0
+    sensor_head_yaw_joint:
+      goal: &goal_pos_constraint 0.5
+      trajectory: &trajectory_pos_constraint 1.0
+    sensor_head_pitch_joint:
+      goal: *goal_pos_constraint
+      trajectory: *trajectory_pos_constraint
+
+    stop_trajectory_duration: 1.0
