@@ -1,0 +1,49 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+
+    <arg name="port_name" default="/dev/rs485_extern"/>
+    
+    <!-- Start the Dynamixel servo manager to control hector_arm -->
+    <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
+        <rosparam subst_value="true">
+            namespace: sensor_head_dynamixel_controller_manager
+            serial_ports:
+                sensor_head_port:
+                    port_name: $(arg port_name)
+                    baud_rate: 2000000
+                    min_motor_id: 1
+                    max_motor_id: 13
+                    update_rate: 25
+
+        </rosparam>
+    </node>
+
+    <!-- Start upper and lower arm joint controllers -->
+    
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_tracker_sensor_head_dynamixel_controller.yaml" command="load"/>
+
+    <node name="hector_arm_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=sensor_head_dynamixel_controller_manager
+                --port=sensor_head_port
+                --type=simple
+                sensor_head_yaw_joint
+                sensor_head_pitch_joint"
+                output="screen"/>
+                
+                
+
+
+    <node name="sensor_head_control" pkg="hector_dynamixel_ros_control_wrapper" type="hector_dynamixel_ros_control_wrapper_node" output="screen">
+     <rosparam command="load" file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_tracker_sensor_head.yaml" />
+     <remap from="~/joint_states" to="/joint_states"/>
+    </node>
+
+
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/joint_state_controller.yaml" command="load" ns="sensor_head_control"/>
+    <node name="joint_state_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller" ns="sensor_head_control"/>
+
+    <rosparam file="$(find hector_dynamixel_ros_control_wrapper)/config/hector_tracker_sensor_head_joint_trajectory_controller.yaml" command="load" ns="sensor_head_control"/>
+    <node name="joint_trajectory_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="sensor_head_traj_controller" ns="sensor_head_control"/>                
+
+ </launch>
