@@ -2,7 +2,7 @@
 
 <launch>
 
-    <arg name="port_name" default="/dev/ttyUSB_head"/>
+    <arg name="port_name" default="ttyUSB_head"/>
     
     <!-- Start the Dynamixel servo manager to control hector_arm -->
     <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen">
@@ -13,7 +13,7 @@
                     port_name: $(arg port_name)
                     baud_rate: 2000000
                     min_motor_id: 1
-                    max_motor_id: 13
+                    max_motor_id: 2
                     update_rate: 25
 
         </rosparam>
