@@ -5,7 +5,7 @@
     <arg name="port_name" default="/dev/ttyUSB_head"/>
     
     <!-- Start the Dynamixel servo manager to control hector_arm -->
-    <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen" respawn="true" />
+    <node name="sensor_head_dynamixel_controller_manager" pkg="dynamixel_controllers" type="controller_manager.py" required="true" output="screen" respawn="true">
         <rosparam subst_value="true">
             namespace: sensor_head_dynamixel_controller_manager
             serial_ports:
