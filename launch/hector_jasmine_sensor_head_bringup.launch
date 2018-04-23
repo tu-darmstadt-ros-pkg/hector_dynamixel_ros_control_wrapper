@@ -30,7 +30,7 @@
                 sensor_head_yaw_joint
                 sensor_head_pitch_joint"
                 output="screen"
-                respawn="true"/>
+                respawn="false"/>
                 
                 
 
