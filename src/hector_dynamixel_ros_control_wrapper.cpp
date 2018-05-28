@@ -165,6 +165,7 @@ void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period
         //Filter unrealistic large jumps in joint positions 
         if(abs(received_joint_states_[joint_name_vector_[i]]->current_pos - joint_positions_[joint_name_vector_[i]]) < 0.1 || invalid_position_counter > 5){
             invalid_position_counter = 0;
+            ROS_INFO("%d",abs(received_joint_states_[joint_name_vector_[i]]->current_pos - joint_positions_[joint_name_vector_[i]]));
             joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
         }else{
             ROS_INFO("invalid_joint_position");
