@@ -50,6 +50,8 @@ HectorDynamixelRosControlWrapper::HectorDynamixelRosControlWrapper(ros::NodeHand
     XmlRpc::XmlRpcValue joints_params;
     joints_nh.getParam("", joints_params);
     ROS_DEBUG("Joints params: %s.", joints_params.toXml().c_str());
+    
+    invalid_position_counter = 0;
 
     XmlRpc::XmlRpcValue::iterator xml_it;
     for (xml_it = joints_params.begin(); xml_it != joints_params.end(); ++xml_it)
@@ -160,7 +162,13 @@ void HectorDynamixelRosControlWrapper::read(ros::Time time, ros::Duration period
     {
 
 	     //ROS_INFO_THROTTLE(1,"processing %s", joint_name_vector_[i].c_str());
-        joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
+        //Filter unrealistic large jumps in joint positions 
+        if((abs(received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]])) - abs(joint_positions_[joint_name_vector_[i]] < 0.1) || invalid_position_counter > 5){
+            invalid_position_counter = 0;
+            joint_positions_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->current_pos - joint_offset[joint_name_vector_[i]];
+        }else{
+            invalid_position_counter++;
+        }
         joint_velocitys_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->velocity;
         joint_efforts_[joint_name_vector_[i]] = received_joint_states_[joint_name_vector_[i]]->load;
     }

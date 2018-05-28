@@ -93,6 +93,8 @@ private:
 
     std::map<std::string, double> _fake_joint_values;
     std::map<std::string, double> joint_offset;
+    
+    int invalid_position_counter;
 };
 
 }
