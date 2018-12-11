@@ -7,7 +7,7 @@ sensor_head_yaw_joint:
     joint_speed: 1.5
     motor:
         id: 1
-        init: 400
+        init: 434
         min: 230
         max: 650
 
@@ -20,6 +20,6 @@ sensor_head_pitch_joint:
     joint_speed: 1.5
     motor:
         id: 2
-        init: 600
+        init: 667
         min: 550
         max: 750
