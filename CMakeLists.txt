@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   hardware_interface
   controller_manager
+  dynamixel_msgs
 )
 
 ## System dependencies are found with CMake's conventions
